@@ -1,0 +1,126 @@
+version: '3.8'
+
+services:
+  # Banco de dados PostgreSQL
+  postgres:
+    image: postgres:15-alpine
+    container_name: healthgo-postgres
+    environment:
+      POSTGRES_DB: healthgo
+      POSTGRES_USER: healthgo_user
+      POSTGRES_PASSWORD: healthgo_pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./banco-dados/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - healthgo-network
+    restart: unless-stopped
+
+  # Cache Redis
+  redis:
+    image: redis:7-alpine
+    container_name: healthgo-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - healthgo-network
+    restart: unless-stopped
+
+  # Backend Spring Boot
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: healthgo-backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/healthgo
+      SPRING_DATASOURCE_USERNAME: healthgo_user
+      SPRING_DATASOURCE_PASSWORD: healthgo_pass
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      JWT_SECRET: sua-chave-secreta-muito-segura-aqui-2024
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - healthgo-network
+    restart: unless-stopped
+
+  # Frontend React
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: healthgo-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - healthgo-network
+    restart: unless-stopped
+
+  # Simulador Desktop Go
+  simulador:
+    build:
+      context: ./simulador-desktop
+      dockerfile: Dockerfile
+    container_name: healthgo-simulador
+    environment:
+      BACKEND_URL: http://backend:8080
+      WS_URL: ws://backend:8080/ws
+    depends_on:
+      - backend
+    networks:
+      - healthgo-network
+    restart: unless-stopped
+
+  # Prometheus para monitoramento
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: healthgo-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - healthgo-network
+    restart: unless-stopped
+
+  # Grafana para visualização
+  grafana:
+    image: grafana/grafana:latest
+    container_name: healthgo-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - prometheus
+    networks:
+      - healthgo-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  healthgo-network:
+    driver: bridge 

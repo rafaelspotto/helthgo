@@ -1,0 +1,52 @@
+groups:
+  - name: healthgo_alerts
+    rules:
+      # Alerta para serviço down
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Serviço {{ $labels.job }} está down"
+          description: "O serviço {{ $labels.job }} não está respondendo há mais de 1 minuto"
+
+      # Alerta para alta latência
+      - alert: HighLatency
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Alta latência detectada"
+          description: "A latência do 95º percentil está acima de 1 segundo"
+
+      # Alerta para alta taxa de erro
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Alta taxa de erro detectada"
+          description: "Mais de 5% das requisições estão retornando erro 5xx"
+
+      # Alerta para uso de memória
+      - alert: HighMemoryUsage
+        expr: (jvm_memory_used_bytes / jvm_memory_max_bytes) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Alto uso de memória"
+          description: "O uso de memória está acima de 80%"
+
+      # Alerta para conexões WebSocket
+      - alert: WebSocketConnections
+        expr: websocket_connections_total > 100
+        for: 1m
+        labels:
+          severity: info
+        annotations:
+          summary: "Muitas conexões WebSocket"
+          description: "Há mais de 100 conexões WebSocket ativas" 
