@@ -1,5 +1,6 @@
 package br.com.healthgo.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -14,33 +15,43 @@ public class DadosPaciente {
     @Column(name = "timestamp")
     private String timestamp;
 
+    @JsonProperty("paciente_id")
     @Column(name = "paciente_id")
     private String pacienteId;
 
+    @JsonProperty("paciente_nome")
     @Column(name = "paciente_nome")
     private String pacienteNome;
 
+    @JsonProperty("paciente_cpf")
     @Column(name = "paciente_cpf")
     private String pacienteCpf;
 
+    @JsonProperty("freq_cardiaca")
     @Column(name = "freq_cardiaca")
     private Integer freqCardiaca;
 
+    @JsonProperty("saturacao_o2")
     @Column(name = "saturacao_o2")
     private Integer saturacaoO2;
 
+    @JsonProperty("pressao_sistolica")
     @Column(name = "pressao_sistolica")
     private Integer pressaoSistolica;
 
+    @JsonProperty("pressao_diastolica")
     @Column(name = "pressao_diastolica")
     private Integer pressaoDiastolica;
 
+    @JsonProperty("temperatura")
     @Column(name = "temperatura")
     private Double temperatura;
 
+    @JsonProperty("freq_respiratoria")
     @Column(name = "freq_respiratoria")
     private Integer freqRespiratoria;
 
+    @JsonProperty("status")
     @Column(name = "status")
     private String status;
 

@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"time"
@@ -38,8 +40,8 @@ func main() {
 	log.Println("🏥 Iniciando Simulador HealthGo Desktop...")
 
 	config := ConfiguracaoSimulador{
-		URLBackend:     "http://localhost:8080",
-		URLWebSocket:   "ws://localhost:8080/ws",
+		URLBackend:     "http://backend:8080",
+		URLWebSocket:   "ws://backend:8080/ws",
 		IntervaloEnvio: 200 * time.Millisecond,
 	}
 
@@ -64,12 +66,24 @@ func simularPaciente(arquivoCSV string, config ConfiguracaoSimulador, numeroPaci
 	log.Printf("📊 Iniciando simulação do paciente %d: %s", numeroPaciente, arquivoCSV)
 
 	// Conecta ao WebSocket
-	conn, err := websocket.Dial(config.URLWebSocket, "", "")
+	u, err := url.Parse(config.URLWebSocket)
+	if err != nil {
+		log.Printf("❌ Erro ao parsear URL WebSocket: %v", err)
+		return
+	}
+
+	// Adiciona User-Agent para identificar como desktop
+	headers := http.Header{}
+	headers.Add("User-Agent", "HealthGo-Desktop-Simulator")
+
+	conn, _, err := websocket.DefaultDialer.Dial(u.String(), headers)
 	if err != nil {
 		log.Printf("❌ Erro ao conectar WebSocket para paciente %d: %v", numeroPaciente, err)
 		return
 	}
 	defer conn.Close()
+
+	log.Printf("✅ WebSocket conectado para paciente %d", numeroPaciente)
 
 	// Abre o arquivo CSV
 	arquivo, err := os.Open(arquivoCSV)
@@ -100,13 +114,14 @@ func simularPaciente(arquivoCSV string, config ConfiguracaoSimulador, numeroPaci
 		dados := parsearDadosPaciente(registro)
 
 		// Envia dados via WebSocket
-		if err := enviarDadosWebSocket(conn, dados); err != nil {
+		err := enviarDadosWebSocket(conn, dados)
+		if err != nil {
 			log.Printf("❌ Erro ao enviar dados do paciente %d: %v", numeroPaciente, err)
-			continue
+		} else {
+			jsonDados, _ := json.Marshal(dados)
+			log.Printf("✅ Paciente %d - Registro %d/%d enviado: %s - %s",
+				numeroPaciente, i+1, len(registros)-inicio, dados.Timestamp, string(jsonDados))
 		}
-
-		log.Printf("✅ Paciente %d - Registro %d/%d enviado: %s",
-			numeroPaciente, i+1, len(registros)-inicio, dados.Timestamp)
 
 		// Aguarda o intervalo configurado
 		time.Sleep(config.IntervaloEnvio)
@@ -145,11 +160,9 @@ func enviarDadosWebSocket(conn *websocket.Conn, dados DadosPaciente) error {
 	if err != nil {
 		return fmt.Errorf("erro ao serializar dados: %v", err)
 	}
-
 	err = conn.WriteMessage(websocket.TextMessage, jsonDados)
 	if err != nil {
 		return fmt.Errorf("erro ao enviar mensagem WebSocket: %v", err)
 	}
-
 	return nil
 }

@@ -44,19 +44,19 @@ ChartJS.register(
 );
 
 interface DadosPaciente {
-  id: number;
+  id?: number;
   timestamp: string;
-  pacienteId: string;
-  pacienteNome: string;
-  pacienteCpf: string;
-  freqCardiaca: number;
-  saturacaoO2: number;
-  pressaoSistolica: number;
-  pressaoDiastolica: number;
+  paciente_id: string; // Mapeia para pacienteId
+  paciente_nome: string; // Mapeia para pacienteNome
+  paciente_cpf: string; // Mapeia para pacienteCpf
+  freq_cardiaca: number; // Mapeia para freqCardiaca
+  saturacao_o2: number; // Mapeia para saturacaoO2
+  pressao_sistolica: number; // Mapeia para pressaoSistolica
+  pressao_diastolica: number; // Mapeia para pressaoDiastolica
   temperatura: number;
-  freqRespiratoria: number;
+  freq_respiratoria: number; // Mapeia para freqRespiratoria
   status: string;
-  dataCriacao: string;
+  data_criacao?: string; // Mapeia para dataCriacao
 }
 
 const Dashboard: React.FC = () => {
@@ -113,7 +113,7 @@ const Dashboard: React.FC = () => {
 
   const atualizarDadosPaciente = (novosDados: DadosPaciente) => {
     setPacientes(prev => {
-      const index = prev.findIndex(p => p.pacienteId === novosDados.pacienteId);
+      const index = prev.findIndex(p => p.paciente_id === novosDados.paciente_id);
       if (index >= 0) {
         const atualizados = [...prev];
         atualizados[index] = novosDados;
@@ -144,12 +144,12 @@ const Dashboard: React.FC = () => {
         {
           label: 'Valores',
           data: [
-            paciente.freqCardiaca,
-            paciente.saturacaoO2,
-            paciente.pressaoSistolica,
-            paciente.pressaoDiastolica,
+            paciente.freq_cardiaca,
+            paciente.saturacao_o2,
+            paciente.pressao_sistolica,
+            paciente.pressao_diastolica,
             paciente.temperatura * 10, // Multiplica por 10 para melhor visualização
-            paciente.freqRespiratoria
+            paciente.freq_respiratoria
           ],
           borderColor: 'rgb(75, 192, 192)',
           backgroundColor: 'rgba(75, 192, 192, 0.2)',
@@ -199,12 +199,12 @@ const Dashboard: React.FC = () => {
       <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
         <Grid container spacing={3}>
           {pacientes.map((paciente) => (
-            <Grid item xs={12} md={6} lg={4} key={paciente.pacienteId}>
+            <Grid item xs={12} md={6} lg={4} key={paciente.paciente_id}>
               <Card>
                 <CardContent>
                   <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
                     <Typography variant="h6" component="div">
-                      {paciente.pacienteNome}
+                      {paciente.paciente_nome}
                     </Typography>
                     <Chip
                       icon={obterIconeStatus(paciente.status)}
@@ -219,7 +219,7 @@ const Dashboard: React.FC = () => {
                       <Box display="flex" alignItems="center">
                         <Favorite color="error" sx={{ mr: 1 }} />
                         <Typography variant="body2">
-                          {paciente.freqCardiaca} bpm
+                          {paciente.freq_cardiaca} bpm
                         </Typography>
                       </Box>
                     </Grid>
@@ -227,13 +227,13 @@ const Dashboard: React.FC = () => {
                       <Box display="flex" alignItems="center">
                         <TrendingUp color="primary" sx={{ mr: 1 }} />
                         <Typography variant="body2">
-                          {paciente.saturacaoO2}% O₂
+                          {paciente.saturacao_o2}% O₂
                         </Typography>
                       </Box>
                     </Grid>
                     <Grid item xs={6}>
                       <Typography variant="body2">
-                        Pressão: {paciente.pressaoSistolica}/{paciente.pressaoDiastolica} mmHg
+                        Pressão: {paciente.pressao_sistolica}/{paciente.pressao_diastolica} mmHg
                       </Typography>
                     </Grid>
                     <Grid item xs={6}>

@@ -3,17 +3,13 @@ FROM golang:1.21-alpine AS builder
 
 WORKDIR /app
 
-# Copia os arquivos de dependências
-COPY go.mod go.sum ./
-
-# Baixa as dependências
-RUN go mod download
-
-# Copia o código fonte
+# Copia todo o código fonte
 COPY . .
 
-# Compila o aplicativo
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o simulador .
+# Baixa as dependências e compila
+RUN go mod download
+RUN go mod verify
+RUN CGO_ENABLED=0 GOOS=linux go build -o simulador .
 
 # Runtime stage
 FROM alpine:latest

@@ -7,13 +7,13 @@ WORKDIR /app
 COPY package*.json ./
 
 # Instala as dependências
-RUN npm ci --only=production
+RUN npm install
 
 # Copia o código fonte
 COPY . .
 
-# Constrói a aplicação
-RUN npm run build
+# Constrói a aplicação com ambiente de desenvolvimento
+RUN REACT_APP_API_URL=http://localhost:8080 REACT_APP_WS_URL=ws://localhost:8080/ws npm run build
 
 # Production stage
 FROM nginx:alpine
